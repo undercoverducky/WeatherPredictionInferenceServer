@@ -1,0 +1,6 @@
+boto3
+seldon-core
+grpcio
+onnxruntime
+numpy
+Pillow
