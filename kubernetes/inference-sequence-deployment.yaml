@@ -1,15 +1,15 @@
 apiVersion: machinelearning.seldon.io/v1
 kind: SeldonDeployment
 metadata:
-  name: weather-prediction-deployment
+  name: weather-sequence-prediction-deployment
 spec:
-  name: weather-prediction
+  name: weather-sequence-prediction
   predictors:
   - componentSpecs:
     - spec:
         containers:
-        - image: undercoverducky/weatherpredictionmodel:0.0.7-amd64
-          name: weather-regression
+        - image: undercoverducky/weatherpredictionsequencemodel:0.0.2-amd64
+          name: weather-sequence-regression
           ports:
             - containerPort: 9000
           env:
@@ -28,9 +28,9 @@ spec:
       children: []
       endpoint:
         type: REST
-      name: weather-regression
+      name: weather-sequence-regression
       type: MODEL
     labels:
       version: v1
-    name: weather-regression-component
+    name: weather-sequence-regression-component
     replicas: 1

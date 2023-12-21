@@ -4,3 +4,4 @@ grpcio
 onnxruntime
 numpy
 Pillow
+owslib

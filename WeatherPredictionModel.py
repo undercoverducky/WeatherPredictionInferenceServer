@@ -7,7 +7,7 @@ import numpy as np
 import onnxruntime as ort
 
 def load_model( bucket_name, date=None):
-    if date is None:
+    """if date is None:
         date = datetime.now().strftime('%b-%d')
     s3_client = boto3.client('s3')
     object_key = f'Model-{date}.onnx'
@@ -15,11 +15,37 @@ def load_model( bucket_name, date=None):
 
     s3_client.download_file(bucket_name, object_key, local_model_path)
     session = ort.InferenceSession(local_model_path)
-    return session
+    return session"""
+    if date is None:
+        date = datetime.now()
+
+    s3_client = boto3.client('s3')
+
+    # Retry logic for finding the most recent model
+    for i in range(12):  # Retry up to 12 months back
+        formatted_date = date.strftime('%b-%Y')
+        object_key = f'Model-{formatted_date}.onnx'
+        local_model_path = f'Model-{formatted_date}.onnx'
+
+        try:
+            s3_client.download_file(bucket_name, object_key, local_model_path)
+            session = ort.InferenceSession(local_model_path)
+            return session
+        except s3_client.exceptions.NoSuchKey:
+            # Decrement the month manually, adjust the year if needed
+            month = date.month - 1
+            year = date.year
+            if month == 0:  # If January, move to December of previous year
+                month = 12
+                year -= 1
+            date = date.replace(month=month, year=year)
+            continue
+
+    raise Exception("Model not found for the past 12 months.")
 
 class WeatherPredictionModel(object):
     def __init__(self):
-        self.ort_session = load_model("austin-weather-prediction-models", date='Nov-01')
+        self.ort_session = load_model("austin-weather-prediction-models")
         self.input_names = [input.name for input in self.ort_session.get_inputs()]
     def predict(self, *args):
         data = args[0]
@@ -43,3 +69,4 @@ class WeatherPredictionModel(object):
             return [float(pred_high), float(pred_low)]
         else:
             raise ValueError(f"Input data malformed, received {args}")
+
